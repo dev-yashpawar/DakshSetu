@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node --max-old-space-size=512 ../node_modules/typescript/bin/tsc --noEmit && node --max-old-space-size=512 ../node_modules/vite/bin/vite.js build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
@@ -31,6 +31,7 @@
     "fake-indexeddb": "^6.2.6",
     "jsdom": "^27.4.0",
     "tailwindcss": "^4.1.14",
-    "vite": "^6.4.1"
+    "vite": "^6.4.1",
+    "typescript": "~5.9.3"
   }
 }

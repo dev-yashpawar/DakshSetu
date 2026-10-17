@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Shared validation uses the client's Zod when dependencies are installed only here.
+  resolve: { dedupe: ["zod"] },
   build: {
     manifest: true,
     rollupOptions: {
