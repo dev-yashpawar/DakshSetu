@@ -1,0 +1,46 @@
+{
+  "name": "@dakshsetu/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "node --max-old-space-size=512 ../node_modules/typescript/bin/tsc",
+    "start": "node dist/server/src/index.js",
+    "seed": "tsx src/seed.ts",
+    "bootstrap-user": "node dist/server/src/bootstrap-user.js",
+    "seed:qualifications": "node dist/server/src/seed.js --qualifications-only",
+    "test": "tsx --test --test-concurrency=1 test/*.test.ts",
+    "test:live": "tsx scripts/live-ai.ts",
+    "test:live-assessment": "tsx scripts/live-assessment.ts",
+    "test:live-video": "tsx scripts/live-video.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.20.2",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.5",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.23",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.18.10",
+    "@types/pdfkit": "^0.17.6",
+    "@types/qrcode": "^1.5.6",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6"
+  }
+}

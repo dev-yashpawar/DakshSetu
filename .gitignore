@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+!.env.production.example
+**/.npmrc
+*.pem
+*.key
+server/data/
+server/uploads/
+*.log
+.DS_Store
+.openai/
+.tools/
+tmp/
+output/

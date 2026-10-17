@@ -1,0 +1,33 @@
+{
+  "name": "dakshsetu",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "setup:video": "node scripts/setup-video.mjs",
+    "dev": "concurrently -k -n db,api,web -c yellow,blue,green \"npm run db\" \"npm run dev -w server\" \"npm run dev -w client\"",
+    "db": "node scripts/db.mjs",
+    "build": "npm run build -w server && npm run build -w client && node scripts/build-offline.mjs",
+    "test": "npm run test -w server && npm run test:ui",
+    "test:ui": "tsx --tsconfig client/tsconfig.json --test --test-concurrency=1 client/test/*.test.tsx",
+    "test:localization": "tsx --tsconfig client/tsconfig.json --test client/test/localization.test.tsx",
+    "test:shell": "node scripts/test-offline-shell.mjs",
+    "test:bundles": "node scripts/test-bundles.mjs",
+    "test:production": "node scripts/production-smoke.mjs",
+    "test:local-pages": "node scripts/local-page-check.mjs",
+    "package:deploy": "node scripts/package-deploy.mjs",
+    "seed": "npm run seed -w server",
+    "start": "npm run start -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "~5.9.3"
+  }
+}

@@ -1,0 +1,436 @@
+.credential-summary{display:flex;gap:26px;align-items:center;flex-wrap:wrap}.credential-summary>div{flex:1;min-width:220px}.credential-summary svg{flex-shrink:0}.credential-summary strong,.verification-link input{overflow-wrap:anywhere}.credential-panel{border-block:1px solid #dbe3ee;padding-block:24px;margin-bottom:24px}.verification-link{display:block;margin:18px 0}.verification-link input{display:block;width:100%;font-size:12px}.credential-revocation{padding:18px;background:#fff4ee;border:1px solid #edd4c1;border-radius:10px}.credential-revocation textarea{display:block;width:100%}.verification-page{padding-block:42px 70px;max-width:900px}.verification-page>h1{margin-block:18px;font-size:clamp(28px,4vw,42px)}.verify-record{margin-block:26px}.verify-record.valid>svg{color:#168044}.verify-record.invalid>svg{color:#9c3d2c}.verify-record ul{padding-left:20px;line-height:1.9}.media-upload{display:flex;gap:20px;align-items:end;flex-wrap:wrap;margin-block:20px}.video-record{border-top:1px solid #dae2ee;padding-block:22px}.video-record details{margin-block:12px}.video-record summary{cursor:pointer;min-height:44px}.video-review{margin-top:24px}.rubric-row select[multiple]{display:block;width:100%;max-height:100px;margin-top:8px;font-size:13px}.rubric-row>label{display:block;margin-top:12px}
+.connectivity {
+  background: #eef6f0;
+  border-bottom: 1px solid #d5e6d9;
+  color: #184e2e;
+  font-size: 12px;
+}
+.connectivity.offline {
+  background: #fff3df;
+  color: #75450c;
+  border-color: #efcc93;
+}
+.connectivity > .container {
+  display: flex;
+  align-items: center;
+  gap: 10px 22px;
+  flex-wrap: wrap;
+  padding-block: 8px;
+}
+.connectivity span,
+.connectivity a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.connectivity .text-button {
+  font-size: 12px;
+  min-height: 36px;
+  padding: 0 5px;
+}
+.connectivity details {
+  margin-left: auto;
+}
+.connectivity summary {
+  cursor: pointer;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+.connectivity details[open] {
+  flex-basis: 100%;
+}
+.storage-error {
+  color: #a32f25;
+  flex-basis: 100%;
+}
+.device-conflict {
+  border: 2px solid #dfb068;
+  margin-block: 20px;
+}
+.device-conflict .button {
+  margin-top: 18px;
+  margin-right: 20px;
+}
+.passport-page,
+.admin-page {
+  padding-block: 36px 64px;
+  min-height: 65vh;
+}
+.passport-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.passport-actions > div {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.skill-passport {
+  background: white;
+  border: 1px solid #dbe3ee;
+  border-radius: 18px;
+  padding: 36px;
+  box-shadow: 0 12px 40px #0b2a5b0a;
+}
+.passport-heading {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.passport-heading > img {
+  width: 170px;
+  height: 114px;
+  object-fit: contain;
+}
+.passport-heading > div {
+  flex: 1;
+  min-width: 220px;
+}
+.passport-heading h1 {
+  font-size: 34px;
+  margin: 9px 0;
+  overflow-wrap: anywhere;
+}
+.passport-heading p {
+  font-size: 18px;
+}
+.passport-disclaimer {
+  padding: 12px 16px;
+  margin-block: 16px 24px;
+  border: 1px solid #eed7b7;
+  border-radius: 8px;
+  background: #fff9ee;
+  color: #7f5019;
+}
+.passport-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-block: 26px;
+}
+.passport-facts > div {
+  min-width: 0;
+}
+.passport-facts dt {
+  font-size: 12px;
+  color: #66768e;
+  margin-bottom: 5px;
+}
+.passport-facts dd {
+  margin: 0;
+  color: #0b2a5b;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.passport-id {
+  font-size: 12px;
+  font-weight: 400 !important;
+}
+.passport-score {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.5fr) minmax(0, 1.5fr);
+  gap: 28px;
+  align-items: center;
+  background: #0b2a5b;
+  color: white;
+  padding: 25px 28px;
+  border-radius: 12px;
+}
+.passport-score strong {
+  display: block;
+  font-size: 56px;
+  line-height: 1.2;
+  margin-top: 10px;
+}
+.passport-score h2 {
+  font-size: 25px;
+  color: white;
+  margin-bottom: 10px;
+}
+.passport-score p {
+  color: #d7e2f4;
+  line-height: 1.7;
+  font-size: 14px;
+}
+.skill-passport > section {
+  margin-top: 32px;
+}
+.skill-passport section > h2 {
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+.skill-passport section > p {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.passport-competencies {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 25px;
+}
+.passport-competencies > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.passport-competencies progress {
+  grid-column: 1/-1;
+  width: 100%;
+  height: 9px;
+  accent-color: #168a45;
+}
+.passport-insights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+  margin-block: 30px;
+}
+.passport-insights > section {
+  padding: 20px;
+  background: #f5f7fc;
+  border: 1px solid #e0e7f1;
+  border-radius: 10px;
+}
+.passport-insights li {
+  margin-bottom: 7px;
+}
+.passport-insights ul {
+  padding-left: 20px;
+  line-height: 1.7;
+}
+.passport-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f5f7fc;
+  border-top: 1px solid #dce4ef;
+  padding: 18px;
+  margin-top: 30px;
+  font-size: 12px;
+  color: #53657f;
+}
+.admin-page > h1 {
+  margin: 12px 0;
+}
+.admin-page > .candidate-tabs {
+  margin-block: 24px;
+}
+.candidate-tabs > a {
+  padding: 13px 19px;
+  font-weight: 650;
+  min-height: 44px;
+}
+.candidate-tabs > a.active {
+  background: #0b2a5b;
+  color: white;
+  border-radius: 8px;
+}
+.admin-page .candidate-table td {
+  max-width: 260px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.admin-page .stat-card h2 {
+  font-size: 17px;
+}
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+@media (max-width: 900px) {
+  .passport-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .skill-passport {
+    padding: 26px;
+  }
+  .passport-heading {
+    gap: 16px;
+  }
+  .passport-score {
+    gap: 18px;
+  }
+  .admin-page .candidate-tabs {
+    overflow: auto;
+  }
+}
+@media (max-width: 600px) {
+  .passport-page,
+  .admin-page {
+    padding-block: 24px 40px;
+  }
+  .skill-passport {
+    padding: 20px 16px;
+  }
+  .passport-heading > img {
+    width: 130px;
+    height: 87px;
+  }
+  .passport-heading h1 {
+    font-size: 28px;
+  }
+  .passport-heading > div {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+  .passport-facts {
+    gap: 18px;
+  }
+  .passport-score,
+  .passport-competencies,
+  .passport-insights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .passport-score {
+    padding: 20px;
+  }
+  .passport-actions > div {
+    width: 100%;
+  }
+  .passport-actions .button {
+    font-size: 13px;
+    flex: 1;
+  }
+  .connectivity > .container {
+    gap: 5px 12px;
+  }
+  .connectivity details {
+    margin-left: 0;
+  }
+  .connectivity.offline strong {
+    font-size: 13px;
+  }
+  .device-conflict .candidate-table {
+    font-size: 12px;
+  }
+}
+@media print {
+  .credential-panel>.passport-actions,.credential-revocation{display:none!important}.credential-summary{break-inside:avoid}.credential-panel .verification-link input{border:0;padding:0;white-space:normal}.credential-panel{break-inside:avoid}.credential-summary svg{width:90px;height:90px}
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: white !important;
+    color: #14243c;
+    font-size: 10pt;
+  }
+  .service-bar,
+  header.header,
+  .connectivity,
+  .passport-actions,
+  .skip-link,
+  body > div > footer {
+    display: none !important;
+  }
+  .passport-page.container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+  .skill-passport {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  .passport-heading h1 {
+    font-size: 24pt;
+  }
+  .passport-heading > img {
+    width: 120px;
+    height: 80px;
+  }
+  .passport-score {
+    background: white !important;
+    color: #0b2a5b;
+    border: 2px solid #0b2a5b;
+  }
+  .passport-score h2,
+  .passport-score p {
+    color: #0b2a5b;
+  }
+  .passport-score strong {
+    font-size: 34pt;
+  }
+  .skill-passport > section {
+    margin-top: 18px;
+  }
+  .passport-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    font-size: 10pt;
+  }
+  .passport-competencies {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .passport-insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .passport-insights > section,
+  .passport-score,
+  .passport-heading {
+    break-inside: avoid;
+  }
+  .table-scroll {
+    overflow: visible;
+  }
+  .candidate-table {
+    min-width: 0;
+    width: 100%;
+  }
+  .candidate-table th,
+  .candidate-table td {
+    padding: 6px;
+    white-space: normal;
+    font-size: 9pt;
+  }
+  .passport-footer {
+    background: white;
+    color: #263b5a;
+  }
+  .passport-footer svg {
+    display: none;
+  }
+  .skill-passport h2 {
+    break-after: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+}
+.quality-page {max-width:1180px}
+.quality-page .panel {margin-block:1.25rem;padding:clamp(1.2rem,3vw,2rem)}
+.quality-guide,.quality-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem}
+.quality-status h2 {margin-top:.5rem}
+.quality-guide ul {padding-left:1.25rem;line-height:1.9}
+.quality-number {display:block;font-size:clamp(2.7rem,6vw,4rem);color:var(--navy,#123363);line-height:1.2}
+.quality-metric:last-child {border-top:4px solid #ee7908}
+.quality-metric:first-child {border-top:4px solid #163b70}
+.quality-page pre {overflow-x:auto;background:#f2f5fa;padding:1rem;border-radius:10px}
+.quality-page .button-row {display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-block:1.5rem}
+.quality-page details>summary {font-weight:700;cursor:pointer}
+.quality-page .stats-grid small {display:block}
+.quality-page label,.worker-main.narrow .panel label {display:grid;gap:.4rem;margin-block:1rem}
+.preserve-lines {white-space:pre-wrap}
+@media(max-width:680px){.quality-guide,.quality-grid{grid-template-columns:1fr}.quality-page .button-row>*{width:100%}}
+.reassessment-card {display:flex;justify-content:space-between;align-items:start;gap:1rem;padding:1rem 0;border-bottom:1px solid #dce4ef}
+.reassessment-card>div {min-width:0;width:100%}
+.reassessment-card h3 {margin-top:0}
+.reassessment-card label {display:grid;gap:.4rem;margin-block:1rem}
+.reassessment-card .checkbox-label {display:flex;align-items:start}
+.reassessment-preview {max-height:320px;max-width:100%;object-fit:contain}
+.reassessment-card input[type=file] {max-width:100%;width:100%}
+@media(max-width:680px){.reassessment-card{display:block}.reassessment-card>.button{margin-top:.8rem}}
+.quality-page th,.quality-page td {padding:.8rem;text-align:left;border-bottom:1px solid #dce4ef;overflow-wrap:anywhere}
+.quality-page table {width:100%;border-collapse:collapse}
+@media print {.reassessment-panel,.credential-revocation,.credential-panel .passport-actions {display:none!important}}
