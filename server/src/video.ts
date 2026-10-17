@@ -26,16 +26,17 @@ export function videoAnalysisAvailable() {
     () => false,
   ));
 }
-export const maxVideoBytes = 10 * 1024 * 1024;
+// Bound memory and the embedded private media record below MongoDB's document limit.
+export const maxVideoBytes = Math.max(1, Math.min(10, Number(process.env.MAX_VIDEO_MB) || 10)) * 1024 * 1024;
 export function validateVideo(bytes: Buffer, mime: string) {
   if (!bytes.length || bytes.length > maxVideoBytes)
-    throw new HttpError(413, "Choose a video smaller than 10 MB.");
+    throw new HttpError(413, "The video exceeds the configured upload limit.");
   const mp4 = bytes.length > 16 && bytes.toString("ascii", 4, 8) === "ftyp",
     webm = bytes.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
   if (!((mime === "video/mp4" && mp4) || (mime === "video/webm" && webm)))
     throw new HttpError(415, "Choose a valid MP4 or WebM video.");
 }
-export async function representativeFrames(bytes: Buffer, mime: string) {
+export async function representativeFrames(bytes: Buffer, mime: string, includeEndpoints = false) {
   validateVideo(bytes, mime);
   if (!(await videoAnalysisAvailable()))
     throw new HttpError(
@@ -83,6 +84,18 @@ export async function representativeFrames(bytes: Buffer, mime: string) {
         415,
         "Use a video up to 60 seconds and 1080p for frame analysis.",
       );
+    if (includeEndpoints) {
+      // Seek to eight explicit sample positions including the opening and a near-end frame.
+      // Sparse/corrupt media that cannot supply these samples falls back to human review.
+      const times = Array.from({ length: 8 }, (_, i) => Math.max(0, duration - 0.2) * i / 7);
+      const frames: Buffer[] = [];
+      for (let i = 0; i < times.length; i++) {
+        const output = join(folder, `sample-${i}.jpg`);
+        await execute(ffmpeg(), ["-v", "error", "-nostdin", "-threads", "1", "-protocol_whitelist", "file,pipe", "-i", input, "-ss", String(times[i]), "-map", "0:v:0", "-an", "-frames:v", "1", "-vf", "scale=640:-2,format=yuvj420p", "-threads", "1", "-y", output], { windowsHide: true, timeout: 20000, maxBuffer: 128000 });
+        frames.push(await readFile(output));
+      }
+      return { frames, times, duration };
+    }
     // Resample the bounded video in one pass. Seeking near EOF can yield no frame,
     // particularly for sparse frame rates. Explicit full-range JPEG format is
     // required by newer FFmpeg MJPEG encoders. Sparse inputs may repeat frames.

@@ -66,7 +66,7 @@ export async function passportPdf(
         .fillColor(muted)
         .fontSize(10)
         .text(
-          "A bridge from practical competence to formal recognition.",
+          "Assessor-Verified Competency Profile",
           163,
           65,
           { width: 386 },
@@ -114,6 +114,8 @@ export async function passportPdf(
       size: 10,
       color: muted,
     });
+    line("Assessment ID: " + passport.assessmentId, { size: 10, color: muted });
+    line("Issued date: " + new Date(credential.issuedAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }), { size: 10, color: muted });
     line(
       "Status: " +
         (credential.status === "REVOKED" ? "REVOKED" : "ASSESSOR VERIFIED") +

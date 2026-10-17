@@ -285,6 +285,10 @@ export function registerCredentialRoutes(
       });
       res.json({
         credentialId: c.credentialId,
+        credentialStatus: c.status,
+        qualification: p.qualificationTitle,
+        assessorVerified: true,
+        issuedAt: c.issuedAt,
         status: c.status === "REVOKED" ? "REVOKED" : "VALID",
         revision: c.revision,
         workerName: p.workerName,
@@ -318,6 +322,7 @@ export function registerCredentialRoutes(
         history,
         origin + "/verify/" + c.credentialId,
       );
+      await audit(db, { id: randomUUID(), actorId: req.user.id, actorRole: req.user.role, assessmentId: p.assessmentId, action: "PASSPORT_DOWNLOADED", metadata: { credentialId: c.credentialId } });
       res
         .set({
           "Content-Type": "application/pdf",

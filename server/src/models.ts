@@ -111,6 +111,8 @@ export function createModels(connection: Connection) {
       rubricSnapshot: { type: [Schema.Types.Mixed], default: undefined },
       qualificationRevision: Number,
       taskTitle: String,
+      practicalTask: Schema.Types.Mixed,
+      practicalWorkflow: Schema.Types.Mixed,
       scoringPolicy: Schema.Types.Mixed,
       batch: String,
       scheduledAt: String,
@@ -150,16 +152,19 @@ export function createModels(connection: Connection) {
           {
             evidenceId: String,
             observations: [
-              {
-                _id: false,
+              new Schema({
                 criterionId: String,
                 criterion: String,
                 status: String,
                 confidence: Number,
                 evidence: String,
-              },
+                timestamp: Number,
+                timestampLabel: String,
+                type: String,
+              }, { _id: false }),
             ],
             warnings: [String],
+            suggestedScores: { type: [Schema.Types.Mixed], default: undefined },
             suggestedScore: Number,
             maxScore: Number,
             summary: String,
@@ -205,6 +210,10 @@ export function createModels(connection: Connection) {
   >(
     {
       reassessmentId: { type: String, index: true },
+      candidateId: String,
+      taskId: String,
+      uploaderRole: String,
+      duration: Number,
       id: { type: String, required: true, unique: true },
       assessmentId: { type: String, required: true, index: true },
       uploadedBy: { type: String, required: true },

@@ -75,6 +75,9 @@ export function Verify() {
               <>
                 <p className="passport-id">{record.credentialId}</p>
                 <h3>{record.workerName}</h3>
+                {record.qualification && <p>{tr("Qualification")}: {tr(record.qualification)}</p>}
+                {record.credentialStatus && <p>{tr("Credential status")}: {tr(record.credentialStatus)}</p>}
+                {record.assessorVerified && <p>{tr("Assessor verified")}</p>}
                 <p>
                   {tr(record.trade ?? "")} ·{" "}
                   {new Date(record.assessmentDate!).toLocaleDateString(

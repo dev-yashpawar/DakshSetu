@@ -136,6 +136,7 @@ export function offlineSessionValid() {
 }
 
 const cacheable = (url: string) =>
+  /^\/practical\/[^/]+$/.test(url) ||
   url.startsWith("/credentials/assessment/") ||
   /^\/assessments\/[^/]+\/videos$/.test(url) ||
   url === "/auth/me" ||
@@ -426,6 +427,7 @@ async function sendMedia(
 ): Promise<{ data: Assessment; evidence?: Evidence }> {
   if (!client) throw Error("The assessment service is unavailable.");
   const p = item.payload as {
+    taskId?: string;
     assessmentId: string;
     kind: "image" | "video";
     mimeType: string;
@@ -437,6 +439,7 @@ async function sendMedia(
     .data;
   // Append-only media can safely use the current version; scores are never replaced.
   if (a.evidenceIds.includes(item.id)) return { data: a };
+  if (p.taskId !== a.practicalTask?.taskId) throw { response: { status: 409, data: { error: "The practical task changed. Review the device draft before uploading." } } };
   await client.post(`/assessments/${a.id}/media-intents`, {
     id: item.id,
     type: p.kind,
@@ -444,6 +447,7 @@ async function sendMedia(
     filename: p.filename,
     size: p.bytes.byteLength,
     sha256: p.sha256,
+    ...(p.taskId ? { taskId: p.taskId } : {}),
   });
   const form = new FormData();
   form.append(p.kind, new Blob([p.bytes], { type: p.mimeType }), p.filename);
@@ -455,7 +459,9 @@ async function sendMedia(
   }>(
     `/assessments/${a.id}/` + (p.kind === "image" ? "evidence" : "videos"),
     form,
-    { timeout: 60000 },
+    { timeout: 60000, onUploadProgress: (event) => {
+      if (typeof window !== "undefined") window.dispatchEvent(new window.CustomEvent("dakshsetu:upload-progress", { detail: { assessmentId: a.id, percent: Math.min(100, Math.round(100 * event.loaded / (event.total || p.bytes.byteLength))) } }));
+    } },
   );
   return { data: result.data.assessment, evidence: result.data.evidence };
 }
@@ -499,6 +505,7 @@ export async function queueMedia(
     ).join("");
   const metadata = {
       assessmentId: a.id,
+      ...(a.practicalTask ? { taskId: a.practicalTask.taskId } : {}),
       kind,
       mimeType: file.type,
       filename: file.name.slice(0, 150),

@@ -9,6 +9,7 @@ import { registerSchema } from "../../shared/validation.js";
 import { rubric, calculatePractical } from "../../shared/assessment.js";
 import { defaultPolicy, type SystemSettings } from "../../shared/management.js";
 import type { Assessment } from "../../shared/types.js";
+import { practicalStageLabels } from "../../shared/practical.js";
 const wrap =
   (fn: (req: Request, res: Response) => Promise<unknown>): RequestHandler =>
   (req, res, next) => {
@@ -539,9 +540,24 @@ export function registerManagementRoutes(
           .optional()
           .parse(req.query.status),
         batch = z.string().max(80).optional().parse(req.query.batch);
+      const workflow = z.enum(Object.keys(practicalStageLabels) as [keyof typeof practicalStageLabels, ...Array<keyof typeof practicalStageLabels>]).optional().parse(req.query.workflow);
+      const assessorId = uuid.optional().parse(req.query.assessorId);
+      const trade = z.string().max(120).optional().parse(req.query.trade);
+      const result = z.string().max(100).optional().parse(req.query.result);
+      const from = z.string().datetime().optional().parse(req.query.from);
+      const to = z.string().datetime().optional().parse(req.query.to);
+      const credentialStatus = z.enum(["ACTIVE", "UPDATED", "REVOKED"]).optional().parse(req.query.credentialStatus);
+      const workers = trade ? await db.Profile.find({ trade }).select("userId").lean() : undefined;
+      const credentials = credentialStatus ? await db.Credential.find({ status: credentialStatus }).select("assessmentId").lean() : undefined;
       const filter = {
         ...(status ? { status } : {}),
         ...(batch ? { batch } : {}),
+        ...(workflow ? { "practicalWorkflow.stage": workflow } : {}),
+        ...(assessorId ? { assessorId } : {}),
+        ...(workers ? { workerId: { $in: workers.map(p => p.userId) } } : {}),
+        ...(credentials ? { id: { $in: credentials.map(c => c.assessmentId) } } : {}),
+        ...(result ? { recommendation: result } : {}),
+        ...(from || to ? { createdAt: { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) } } : {}),
       };
       const [items, total, people] = await Promise.all([
         db.Assessment.find(filter)
@@ -556,6 +572,9 @@ export function registerManagementRoutes(
       res.json({
         items: items.map((a) => ({
           ...a,
+          workflowStatus: a.practicalWorkflow ? practicalStageLabels[a.practicalWorkflow.stage] : "Awaiting practical",
+          aiReviewStatus: ({ NOT_STARTED: "Not started", PENDING: "Pending", RUNNING: "AI review in progress", COMPLETED: "Completed", FAILED: "Failed" })[a.practicalWorkflow?.aiStatus ?? "NOT_STARTED"],
+          practicalTaskTitle: a.practicalTask?.title ?? "—",
           workerName:
             people.find((u) => u.id === a.workerId)?.name ?? a.workerId,
           assessorName: people.find((u) => u.id === a.assessorId)?.name ?? "",

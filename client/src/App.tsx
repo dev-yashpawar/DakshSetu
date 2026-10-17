@@ -12,8 +12,11 @@ import { SessionProvider, useSession, useCopy } from "./store/session";
 import { Header, Footer, ErrorNotice, Loading } from "./components/common";
 import { Landing } from "./pages/Landing";
 import { RouteBoundary } from "./components/RouteBoundary";
-import { OfflineStatus } from "./components/OfflineStatus";
 import { PortalNavigation } from "./components/PortalNavigation";
+import { SuccessFeedback } from "./components/SuccessFeedback";
+const OfflineStatus = lazy(() =>
+  import("./components/OfflineStatus").then((m) => ({ default: m.OfflineStatus })),
+);
 const WorkerPortal = lazy(() =>
   import("./pages/WorkerPortal").then((m) => ({ default: m.WorkerPortal })),
 );
@@ -162,7 +165,7 @@ function Shell() {
       </a>
       <Header />
       <PortalNavigation />
-      <OfflineStatus />
+      <Suspense fallback={null}><OfflineStatus /></Suspense>
       <div id="main-content">
         <RouteBoundary>
           <Suspense fallback={<Loading />}>
@@ -316,6 +319,7 @@ function Shell() {
         </RouteBoundary>
       </div>
       <Footer />
+      <SuccessFeedback />
       <Scroll />
     </div>
   );

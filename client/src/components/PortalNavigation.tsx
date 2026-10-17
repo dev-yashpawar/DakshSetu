@@ -43,7 +43,6 @@ export function PortalNavigation() {
   const more = [
     ["/worker/profile", "My profile"],
     ["/worker/myskills", "My skills"],
-    ["/worker/evidence", "Evidence"],
     ["/worker/reassessment", "Reassessment"],
   ];
   return (
@@ -53,6 +52,7 @@ export function PortalNavigation() {
     >
       {item("/worker/dashboard", "Dashboard")}
       {item("/worker", "My assessment")}
+      {item("/worker/evidence", "My practical assessment")}
       {item("/worker/passport", "Skill Passport")}
       <details
         className="worker-more"

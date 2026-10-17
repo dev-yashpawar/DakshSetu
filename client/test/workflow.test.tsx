@@ -257,6 +257,7 @@ test(
         ),
       );
       console.log("Workflow checkpoint: voice");
+      await click("Stop recording");
       await click("Analyse my experience");
       await screen.findByRole(
         "heading",

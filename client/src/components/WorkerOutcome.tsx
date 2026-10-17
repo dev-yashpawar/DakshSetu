@@ -102,6 +102,7 @@ export function WorkerOutcome({
         <RefreshCw size={17} />
         {tr(c.refresh)}
       </button>
+      <Link className="button" to="/worker/evidence">{tr("My practical assessment")}</Link>
     </>
   );
 }

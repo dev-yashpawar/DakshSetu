@@ -36,6 +36,9 @@ import type { User, Profile } from "../../shared/types.js";
 import { registerFeatureRoutes } from "./features.js";
 import { audit } from "./audit.js";
 import { registerMediaRoutes } from "./media.js";
+import { registerPracticalRoutes } from "./practical.js";
+import { registerVoiceRoutes } from "./voice.js";
+import { workerAssessment } from "../../shared/practical.js";
 import { registerCredentialRoutes } from "./credentials.js";
 import { registerQualityRoutes } from "./quality.js";
 import { registerReassessmentRoutes } from "./reassessment.js";
@@ -93,6 +96,22 @@ export function createApp(
   );
   app.use("/api/admin/quality/datasets", express.json({ limit: "2mb" }));
   app.use(express.json({ limit: "64kb" }));
+  app.use((req, res, next) => {
+    const json = res.json.bind(res);
+    res.json = (body: unknown) => {
+      if (req.user?.role !== "worker") return json(body);
+      const redact = (value: any): any => {
+        if (Array.isArray(value)) return value.map(redact);
+        if (!value || typeof value !== "object") return value;
+        if ("selfAssessmentScore" in value && "workerId" in value && "evidenceIds" in value) return workerAssessment(value);
+        const { analysis, ...safe } = value;
+        if ("cloudinaryPublicId" in safe) { delete safe.url; delete safe.cloudinaryPublicId; }
+        return Object.fromEntries(Object.entries(safe).map(([k, v]) => [k, k === "_id" ? v : redact(v)]));
+      };
+      return json(redact(JSON.parse(JSON.stringify(body))));
+    };
+    next();
+  });
   if (!config.test)
     app.use(
       "/api",
@@ -506,6 +525,8 @@ export function createApp(
   registerManagementRoutes(app, db, requireAuth, config.allowDemoLogin !== false);
   registerSyncRoutes(app, db, requireAuth);
   registerMediaRoutes(app, db, requireAuth, config.imageStorage, config.ai);
+  registerPracticalRoutes(app, db, requireAuth, config.ai, config.test);
+  registerVoiceRoutes(app, requireAuth, config.ai, config.test);
   registerCredentialRoutes(app, db, requireAuth, config);
   registerQualityRoutes(app, db, requireAuth);
   registerReassessmentRoutes(app, db, requireAuth, config.imageStorage);

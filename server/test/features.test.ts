@@ -1015,7 +1015,7 @@ test("Private video upload saves metadata first, validates ownership and content
       contentType: "video/mp4",
     })
     .expect(413);
-  assert.equal(oversized.body.error, "Choose a video smaller than 10 MB.");
+  assert.equal(oversized.body.error, "The video exceeds the configured upload limit.");
   await context.models.Assessment.updateOne(
     { id: w.assessment.id },
     { $set: { status: "SIGNED_OFF" } },

@@ -4,9 +4,9 @@ import { useTranslate } from "../localization";
 import { useSession } from "../store/session";
 import { api, errorMessage } from "../services/api";
 import { ErrorNotice, Loading } from "../components/common";
-import { queueMedia, retryPending, pendingItems } from "../services/offline";
-import type { WorkerState, Assessment } from "../../../shared/types";
+import type { WorkerState } from "../../../shared/types";
 import { ReassessmentPanel } from "../components/ReassessmentPanel";
+import { WorkerPractical } from "../components/PracticalTask";
 export function WorkerPortal({ view }: { view: string }) {
   const tr = useTranslate(),
     { user, authenticate } = useSession();
@@ -20,10 +20,7 @@ export function WorkerPortal({ view }: { view: string }) {
       phone: "",
       state: "",
       district: "",
-    }),
-    [file, setFile] = useState<File | null>(null),
-    [preview, setPreview] = useState(""),
-    [queued, setQueued] = useState(0);
+    });
   const load = async () => {
     setError("");
     try {
@@ -36,11 +33,7 @@ export function WorkerPortal({ view }: { view: string }) {
         district: d.profile.district,
       });
       setPortal((await api.get("/workers/portal")).data);
-      if (user)
-        setQueued(
-          (await pendingItems(user.id)).filter((i) => i.type === "media")
-            .length,
-        );
+
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -51,15 +44,6 @@ export function WorkerPortal({ view }: { view: string }) {
     window.addEventListener("dakshsetu:sync-complete", update);
     return () => window.removeEventListener("dakshsetu:sync-complete", update);
   }, [user?.id, view]);
-  useEffect(() => {
-    if (!file) {
-      setPreview("");
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     setError("");
@@ -91,7 +75,7 @@ export function WorkerPortal({ view }: { view: string }) {
               myskills: "My skills",
               passport: "Skill Passport",
               reassessment: "Reassessment",
-              evidence: "Evidence",
+              evidence: "My practical assessment",
             } as Record<string, string>
           )[view],
         )}
@@ -133,7 +117,7 @@ export function WorkerPortal({ view }: { view: string }) {
                 a?.status === "SIGNED_OFF"
                   ? "/passports/" + a.id
                   : a
-                    ? "/worker/result"
+                    ? "/worker/evidence"
                     : "/worker"
               }
             >
@@ -283,136 +267,8 @@ export function WorkerPortal({ view }: { view: string }) {
             </Link>
           </section>
         ))}
-      {view === "evidence" && (
-        <section className="workspace-panel">
-          <p>{tr("Add clear photos or a short video for your assessor.")}</p>
-          {a && a.status !== "SIGNED_OFF" ? (
-            <>
-              <label className="field">
-                {tr("Choose practical evidence")}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-              </label>
-              {preview &&
-                (file?.type.startsWith("video/") ? (
-                  <video
-                    src={preview}
-                    controls
-                    style={{ maxWidth: "100%", maxHeight: 300 }}
-                  />
-                ) : (
-                  <img
-                    src={preview}
-                    alt={tr("Selected evidence preview")}
-                    style={{ maxWidth: "100%", maxHeight: 300 }}
-                  />
-                ))}
-              <button
-                className="button"
-                disabled={!file || busy}
-                onClick={() =>
-                  void run(async () => {
-                    const r = await queueMedia(user!.id, a, user!.id, file!);
-                    setFile(null);
-                    setNotice(
-                      tr(
-                        r.queued
-                          ? "Evidence saved on this device. It will upload after reconnecting."
-                          : "Evidence uploaded and saved.",
-                      ),
-                    );
-                    await load();
-                  })
-                }
-              >
-                {tr("Upload evidence")}
-              </button>
-            </>
-          ) : (
-            <p>
-              {tr(
-                a
-                  ? "This assessment is signed off and locked."
-                  : "Complete your self-assessment before uploading evidence.",
-              )}
-            </p>
-          )}
-          {!a && (
-            <Link className="button secondary" to="/worker">
-              {tr("Continue your assessment")}
-            </Link>
-          )}
-          {queued > 0 && (
-            <p>
-              {queued} {tr("changes waiting")}{" "}
-              <button
-                className="text-button"
-                onClick={() =>
-                  void run(async () => {
-                    await retryPending(user!.id);
-                    await load();
-                  })
-                }
-              >
-                {tr("Retry sync")}
-              </button>
-            </p>
-          )}
-          <div className="evidence-grid">
-            {portal?.evidence.map((e: any) => (
-              <SavedEvidence key={e.id} evidence={e} assessmentId={a!.id} />
-            ))}
-          </div>
-        </section>
-      )}
+      {view === "evidence" && a && <WorkerPractical assessment={a} />}
+      {view === "evidence" && !a && <p>{tr("Complete your self-assessment before uploading evidence.")} <Link to="/worker">{tr("Continue your assessment")}</Link></p>}
     </main>
-  );
-}
-function SavedEvidence({
-  evidence: e,
-  assessmentId,
-}: {
-  evidence: any;
-  assessmentId: string;
-}) {
-  const tr = useTranslate();
-  const [url, setUrl] = useState(""),
-    [error, setError] = useState("");
-  useEffect(() => {
-    let live = true,
-      objectUrl = "";
-    api
-      .get(
-        `/assessments/${assessmentId}/${e.type === "video" ? "videos" : "evidence"}/${e.id}/content`,
-        { responseType: "blob" },
-      )
-      .then((r) => {
-        objectUrl = URL.createObjectURL(r.data);
-        if (live) setUrl(objectUrl);
-        else URL.revokeObjectURL(objectUrl);
-      })
-      .catch((x) => {
-        if (live) setError(errorMessage(x));
-      });
-    return () => {
-      live = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [e.id, assessmentId]);
-  return (
-    <article className="evidence-card">
-      {url &&
-        (e.type === "video" ? (
-          <video src={url} controls style={{ maxWidth: "100%" }} />
-        ) : (
-          <img src={url} alt={tr("Saved evidence")} />
-        ))}
-      <strong>{e.filename}</strong>
-      <small>{tr("Saved evidence")}</small>
-      <ErrorNotice message={error} />
-    </article>
   );
 }

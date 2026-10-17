@@ -14,6 +14,8 @@ import {
 } from "../services/offline";
 import { useConnectivity } from "../components/OfflineStatus";
 import { VideoReview } from "../components/VideoReview";
+import { PracticalTaskAssignment } from "../components/PracticalTask";
+import { practicalStageLabels } from "../../../shared/practical";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Link,
@@ -673,6 +675,14 @@ export function CandidateDetail() {
   const a = candidate?.assessment,
     locked = a?.status === "SIGNED_OFF",
     canEdit = !!a && a.assessorId === user?.id && !locked;
+  const readyForReview = !a?.practicalTask || !!a.practicalWorkflow?.submittedAt && ["COMPLETED", "FAILED"].includes(a.practicalWorkflow.aiStatus);
+  const hasRequiredEvidence = a?.practicalTask ? !!a.practicalWorkflow?.submittedEvidenceIds?.length : !!candidate?.evidence.length;
+  useEffect(() => {
+    if(!a?.practicalTask || !["PENDING", "RUNNING"].includes(a.practicalWorkflow?.aiStatus ?? "")) return;
+    let live = true;
+    const timer = setInterval(() => { if(online) void api.get<Candidate>("/assessor/candidates/" + id).then(({data}) => { if(live) setCandidate(data); }).catch(() => {}); }, 5000);
+    return () => { live = false; clearInterval(timer); };
+  }, [a?.id, a?.practicalWorkflow?.aiStatus, id, online]);
   const practicalScore = calculatePractical(
       rows,
       a?.rubricVersion ?? 1,
@@ -693,6 +703,7 @@ export function CandidateDetail() {
     validScore &&
     (finalValue !== (a.practical?.rubricScore ?? 0) ||
       (a.aiSuggestedScore !== undefined && finalValue !== a.aiSuggestedScore) ||
+      a.aiObservation?.suggestedScores?.some(s => a.practical?.rubricScores.find(r => r.criterionId === s.criterionId)?.score !== s.score) ||
       chosenRecommendation !== suggested);
   useEffect(() => {
     if (
@@ -1128,6 +1139,11 @@ export function CandidateDetail() {
           {tr(notice)}
         </div>
       )}
+      {a.assessorId === user?.id && <PracticalTaskAssignment key={a.practicalTask?.taskId ?? a.id} assessment={a} onUpdated={apply} editable={canEdit && online} />}
+      {a.practicalTask && a.practicalWorkflow?.aiStatus !== "COMPLETED" && <p className="notice">{tr(practicalStageLabels[a.practicalWorkflow?.stage ?? "PRACTICAL_ASSIGNED"])}{a.practicalWorkflow?.aiStatus === "FAILED" && <> · {tr("AI review unavailable. Continue with manual assessor review.")}</>}
+        {canEdit && a.practicalWorkflow?.aiStatus === "FAILED" && <button className="text-button" disabled={busy || !online} onClick={() => void run(async () => { const r = await api.post(`/practical/${a.id}/ai-review`, { baseVersion: a.version }); apply(r.data); })}>{tr("Retry AI review")}</button>}
+        <button className="text-button" onClick={() => void load()}>{tr("Refresh")}</button>
+      </p>}
       <nav className="candidate-tabs" aria-label={tr("Candidate sections")}>
         {["overview", "skills", "assessment", "evidence", "recommendation"].map(
           (value) => (
@@ -1276,7 +1292,7 @@ export function CandidateDetail() {
                   <fieldset
                     className="rubric-row"
                     key={r.id}
-                    disabled={!canEdit || busy}
+                    disabled={!canEdit || !readyForReview || busy}
                   >
                     <legend>
                       <span>
@@ -1288,6 +1304,7 @@ export function CandidateDetail() {
                         {tr(r.weight)}%
                       </small>
                     </legend>
+                    {a.aiObservation?.suggestedScores?.find(s => s.criterionId === r.id) && <p className="rubric-ai-hint">{tr("AI suggested score")}: {a.aiObservation.suggestedScores.find(s => s.criterionId === r.id)!.score}/3 · {tr(a.aiObservation.suggestedScores.find(s => s.criterionId === r.id)!.reason)}</p>}
                     <div className="score-choices">
                       {scoreLabels.map((label, value) => (
                         <label
@@ -1393,7 +1410,7 @@ export function CandidateDetail() {
             <button
               className="button"
               onClick={save}
-              disabled={!canEdit || busy || !dirty}
+              disabled={!canEdit || !readyForReview || busy || !dirty}
             >
               {tr(
                 busy ? (
@@ -1409,6 +1426,7 @@ export function CandidateDetail() {
       )}
       {tab === "evidence" && (
         <>
+          {a.practicalTask && <VideoReview assessment={a} workerId={candidate.user.id} canEdit={canEdit} onUpdated={apply} />}
           <AIReviewDecision
             key={a.aiObservation?.createdAt}
             assessment={a}
@@ -1417,15 +1435,15 @@ export function CandidateDetail() {
               setCandidate((c) => (c ? { ...c, assessment } : c))
             }
           />
-          <section className="workspace-panel">
+          {(!a.practicalTask || candidate.evidence.some(e => e.type === "image")) && <section className="workspace-panel">
             <div className="section-label">{tr("04 · PRACTICAL EVIDENCE")}</div>
             <h2>{tr("Make the work visible.")}</h2>
-            <p>
+            {!a.practicalTask && <p>
               {tr(
                 "Upload a clear image of the candidate’s practical task. Images are private and visible only to the worker and assigned assessor.",
               )}
-            </p>
-            {canEdit && (
+            </p>}
+            {canEdit && !a.practicalTask && (
               <>
                 <label className="evidence-upload">
                   <ImagePlus size={32} />
@@ -1477,7 +1495,7 @@ export function CandidateDetail() {
               </>
             )}
             <div className="evidence-grid">
-              {candidate.evidence.map((e) => (
+              {candidate.evidence.filter(e => e.type === "image").map((e) => (
                 <article key={e.id} className="evidence-card">
                   <EvidenceImage evidence={e} assessmentId={a.id} />
                   <strong>{e.filename}</strong>
@@ -1498,8 +1516,8 @@ export function CandidateDetail() {
                 <p>{tr("No evidence uploaded yet.")}</p>
               </div>
             )}
-          </section>
-          <section className="workspace-panel ai-panel">
+          </section>}
+          {!a.practicalTask && <section className="workspace-panel ai-panel">
             <div className="panel-heading">
               <div>
                 <div className="section-label">
@@ -1513,7 +1531,7 @@ export function CandidateDetail() {
                 {tr("Visible evidence only")}
               </span>
             </div>
-            {candidate.evidence.length > 0 && canEdit && (
+            {candidate.evidence.length > 0 && canEdit && !a.practicalTask && (
               <div className="ai-controls">
                 <label>
                   {tr("Evidence to observe")}
@@ -1621,10 +1639,10 @@ export function CandidateDetail() {
                 )}
               </div>
             )}
-          </section>
+          </section>}
         </>
       )}
-      {tab === "evidence" && (
+      {tab === "evidence" && !a.practicalTask && (
         <VideoReview
           assessment={a}
           workerId={candidate.user.id}
@@ -1702,15 +1720,15 @@ export function CandidateDetail() {
           )}
           {!complete && (
             <p className="review-prerequisite">
-              {tr("All eight practical criteria must be scored and saved.")}
+              {tr("All {count} practical criteria must be scored and saved.", { count: rubric.length })}
             </p>
           )}
-          {!candidate.evidence.length && (
+          {!hasRequiredEvidence && (
             <p className="review-prerequisite">
-              {tr("Upload at least one practical evidence image.")}
+              {tr(a.practicalTask ? "Submit practical video evidence before signing off." : "Upload at least one practical evidence image.")}
             </p>
           )}
-          <fieldset className="final-form" disabled={!canEdit || busy}>
+          <fieldset className="final-form" disabled={!canEdit || !readyForReview || busy}>
             <label>
               {tr("Final practical score (0–100)")}
               <input
@@ -1816,7 +1834,7 @@ export function CandidateDetail() {
                   pendingSync ||
                   !complete ||
                   dirty ||
-                  !candidate.evidence.length ||
+                  !hasRequiredEvidence || !readyForReview ||
                   !validScore ||
                   !confirmed ||
                   (adjustment && reason.trim().length < 10)

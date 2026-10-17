@@ -36,6 +36,7 @@ import { createHash } from "node:crypto";
 import { audit } from "./audit.js";
 import { ensurePassport } from "./features.js";
 import { ensureCredential } from "./credentials.js";
+import { assertEvidenceEditable, assertReadyForReview } from "./practical.js";
 
 const route =
   (fn: (req: Request, res: Response) => Promise<unknown>): RequestHandler =>
@@ -168,7 +169,7 @@ export function registerAssessorRoutes(
         db.Profile.findOne({ userId: workerId }).lean(),
         db.Qualification.findOne({ id: assessment.qualificationId }).lean(),
         db.Evidence.find({
-          type: "image",
+          // Task review can reference the submitted video as well as supporting images.
           id: { $in: assessment.evidenceIds ?? [] },
           assessmentId: assessment.id,
         })
@@ -355,6 +356,8 @@ export function registerAssessorRoutes(
       } else if (req.user.role === "assessor") owned(a, req.user.id);
       else throw new HttpError(403, "Evidence access is restricted.");
       editable(a);
+      assertEvidenceEditable(a, req.user.role);
+      if (a.practicalTask && !a.practicalTask.allowImages) throw new HttpError(400, "Supporting images are not allowed for this task.");
       if (a.evidenceIds.includes(uploadId))
         return res.json({
           assessment: a,
@@ -410,6 +413,9 @@ export function registerAssessorRoutes(
           id: uploadId,
           assessmentId: a.id,
           uploadedBy: req.user.id,
+          candidateId: a.workerId,
+          taskId: a.practicalTask?.taskId,
+          uploaderRole: req.user.role,
           type: "image",
           url: uploaded.url,
           cloudinaryPublicId: uploaded.publicId,
@@ -438,6 +444,7 @@ export function registerAssessorRoutes(
                   workerId: req.user.id,
                   version: baseVersion,
                   status: { $ne: "SIGNED_OFF" },
+                  ...(a.practicalTask ? { "practicalTask.taskId": a.practicalTask.taskId, "practicalWorkflow.submittedAt": { $exists: false } } : {}),
                 },
                 {
                   $addToSet: { evidenceIds: uploadId },
@@ -532,6 +539,7 @@ export function registerAssessorRoutes(
         a = await assessmentById(input.assessmentId);
       owned(a, req.user.id);
       editable(a);
+      if (a.practicalTask) throw new HttpError(409, "Use the submitted task AI review instead of replacing its first review.");
       if (a.version !== input.baseVersion)
         throw new HttpError(
           409,
@@ -596,6 +604,7 @@ export function registerAssessorRoutes(
         a = await assessmentById(req.params.id);
       owned(a, req.user.id);
       editable(a);
+      assertReadyForReview(a);
       const rubric = getRubric(a.rubricVersion, a.rubricSnapshot);
       if (
         !a.practical ||
@@ -611,13 +620,13 @@ export function registerAssessorRoutes(
       if (
         !(await db.Evidence.exists({
           assessmentId: a.id,
-          id: { $in: a.evidenceIds },
-          type: "image",
+          id: { $in: a.practicalTask ? a.practicalWorkflow?.submittedEvidenceIds ?? [] : a.evidenceIds },
+          ...(a.practicalTask ? { taskId: a.practicalTask.taskId, type: "video" } : { type: "image" }),
         }))
       )
         throw new HttpError(
           409,
-          "Upload at least one image of practical evidence before signing off.",
+          a.practicalTask ? "Submit practical video evidence before signing off." : "Upload at least one image of practical evidence before signing off.",
         );
       const finalScore = calculateFinal(
         a.selfAssessmentScore,
@@ -625,8 +634,8 @@ export function registerAssessorRoutes(
         a.scoringPolicy,
       );
       const differsFromAI =
-        a.aiSuggestedScore !== undefined &&
-        input.assessorScore !== a.aiSuggestedScore;
+        (a.aiSuggestedScore !== undefined && input.assessorScore !== a.aiSuggestedScore) ||
+        a.aiObservation?.suggestedScores?.some(s => a.practical!.rubricScores.find(r => r.criterionId === s.criterionId)?.score !== s.score);
       const adjusted =
         input.assessorScore !== a.practical.rubricScore ||
         input.recommendation !==
@@ -642,6 +651,7 @@ export function registerAssessorRoutes(
         req.user.id,
         {
           status: "SIGNED_OFF",
+          ...(a.practicalWorkflow ? { practicalWorkflow: { ...a.practicalWorkflow, stage: "SIGNED_OFF" as const } } : {}),
           practicalScore: input.assessorScore,
           assessorScore: input.assessorScore,
           finalScore,

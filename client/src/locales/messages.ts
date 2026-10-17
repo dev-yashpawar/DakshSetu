@@ -3,6 +3,8 @@ import { phaseMessages } from "./phases";
 import { advancedMessages } from "./advanced";
 import { managementMessages } from "./management";
 const coreMessages: readonly [string, string, string][] = [
+  ["Done", "हो गया", "पूर्ण झाले"],
+  ["My practical assessment", "मेरा प्रायोगिक मूल्यांकन", "माझे प्रात्यक्षिक मूल्यांकन"],
   [
     "Choose at least {count} items.",
     "कम से कम {count} विकल्प चुनें।",

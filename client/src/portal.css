@@ -1129,3 +1129,28 @@
   font-size: 14px;
   margin: 10px 0;
 }
+.app-portal input[type="checkbox"], .app-public input[type="checkbox"] {
+  width: 18px; height: 18px; min-width: 18px; min-height: 18px; max-width: 18px; max-height: 18px;
+  padding: 0; flex: 0 0 18px; margin: 3px 0; accent-color: #0b2a5b; box-sizing: border-box;
+}
+.app-portal input[type="radio"], .app-public input[type="radio"] {
+  width: 16px; height: 16px; min-width: 16px; min-height: 16px; max-width: 16px; max-height: 16px;
+  padding: 0; flex: 0 0 16px; accent-color: #0b2a5b; box-sizing: border-box;
+}
+.success-feedback-region { position: fixed; bottom: max(24px, env(safe-area-inset-bottom)); right: 24px; z-index: 1000; pointer-events: none; }
+.success-feedback { display: flex; align-items: center; gap: 10px; padding: 12px 18px; max-width: min(340px, calc(100vw - 32px)); border: 1px solid #dbe3f0; border-left: 3px solid #ed7900; border-radius: 12px; color: #0b2a5b; background: #fff; box-shadow: 0 5px 20px #0b2a5b14; animation: success-feedback-enter .2s ease-out both; font-size: 15px; font-weight: 600; }
+.success-feedback-check { width: 28px; height: 28px; flex-shrink: 0; fill: none; stroke: #207b3c; stroke-width: 2; }
+.success-feedback-check circle { fill: #edf8ef; stroke: #c4e4cc; }
+.success-feedback-check path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: success-feedback-draw .35s .1s ease-out forwards; stroke-linecap: round; stroke-linejoin: round; }
+.speech-interim { color: #586983; font-style: italic; border-left: 3px solid #ed7900; padding: 8px 12px; }
+.recorded-voice { background: #fff; border: 1px solid #dbe3f0; border-radius: 12px; padding: 20px; margin: 16px 0; }
+.recorded-voice h3 { margin: 0 0 8px; font-size: 18px; }
+.recorded-voice p { font-size: 14px; line-height: 1.6; }
+.recorded-voice-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.recorded-voice input { display: block; max-width: 100%; font-size: 14px; margin-top: 6px; }
+.recorded-voice audio { display: block; width: 100%; max-width: 400px; margin: 14px 0; }
+.recorded-voice > a { display: inline-block; margin: 0 16px 12px 0; font-size: 14px; }
+@keyframes success-feedback-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes success-feedback-draw { to { stroke-dashoffset: 0; } }
+@media (max-width: 600px) { .success-feedback-region { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion: reduce) { .success-feedback, .success-feedback-check path { animation: none; } .success-feedback-check path { stroke-dashoffset: 0; } }
