@@ -24,7 +24,21 @@ async function include(path) {
         continue;
       await include(path + "/" + item);
     }
-  } else files.push(path.replaceAll("\\", "/"));
+  } else {
+    if (path.endsWith(".npmrc")) {
+      const lines = (await readFile(full, "utf8"))
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(
+          (line) => line && !line.startsWith("#") && !line.startsWith(";"),
+        );
+      if (lines.some((line) => !/^include\s*=\s*dev$/.test(line)))
+        throw Error(
+          "Only public include=dev npm configuration may enter the deployment archive.",
+        );
+    }
+    files.push(path.replaceAll("\\", "/"));
+  }
 }
 for (const path of [
   "package.json",
@@ -33,6 +47,8 @@ for (const path of [
   "render.yaml",
   ".dockerignore",
   ".gitignore",
+  ".npmrc",
+  "server/.npmrc",
   "README.md",
   "DEPLOYMENT.md",
   "server/.env.production.example",

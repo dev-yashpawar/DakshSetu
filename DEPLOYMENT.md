@@ -61,7 +61,7 @@ Use Node.js 22 or newer supported by your host. Install FFmpeg and FFprobe throu
 ```sh
 npm ci --include=dev
 npm run build
-npm prune --omit=dev
+npm prune --omit=dev --include=prod
 npm start
 ```
 

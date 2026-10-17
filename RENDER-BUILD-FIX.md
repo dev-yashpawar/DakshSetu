@@ -1,5 +1,17 @@
 # Render backend build fix
 
+## Follow-up: TS2688 for Node types
+
+The supplied Render log still runs `npm install; npm run build`. The portable `tsc` command is now reached, but its required Node declaration package is missing. `@types/node` is already directly declared under server devDependencies; a production-mode npm install can omit that group. Root `.npmrc` and `server/.npmrc` now set `include=dev` so npm includes build tools/types even with `NODE_ENV=production`. The root config covers workspace installs; the server config covers standalone installs. They contain no credentials and are explicitly included in the deployment archive. Other private npm config files remain ignored.
+
+Keep NODE_ENV=production. In Render, use Root Directory blank, Build Command `cd server && npm install --include=dev && npm run build`, Start Command `cd server && npm start`. Save these dashboard fields explicitly: changing render.yaml does not automatically change a manually configured service. Push/upload the updated source and clear the build cache for the retry. The log's old command is evidence that the dashboard command has not been updated.
+
+For optional dependency pruning after a native-host build, use `npm prune --omit=dev --include=prod` to override the build-oriented include setting. Docker already uses explicit build-stage dependency installation and excludes npm config from the image.
+
+Reference: [npm install include/omit behavior](https://docs.npmjs.com/cli/commands/npm-ci/). No package dependencies, application code or runtime environment handling were changed in this follow-up.
+
+Follow-up verification: a fresh standalone install under NODE_ENV=production omitted Node types, and compiling reproduced the exact TS2688 message in the supplied log. With the server npm config added, plain npm install under NODE_ENV=production plus NPM_CONFIG_OMIT=dev installed the missing build dependencies and npm run build passed. The workspace-root npm config also reports include=dev. Logs: `render-types-before.log`, `render-types-reproduced.log`, `render-types-after-install.log`, `render-types-after-build.log` under ignored server/data.
+
 ## Root cause
 
 The old server build directly executed `../node_modules/typescript/bin/tsc`. That assumes a particular hoisted installation layout which Render's server-root installation did not provide. TypeScript was only declared at the repository root. Both are fixed: the server now directly declares TypeScript and calls its package binary through npm.
