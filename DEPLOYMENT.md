@@ -1,6 +1,6 @@
 # Deploy DakshSetu
 
-This release serves the React site and Express API together from one service. Hosting is left to you; nothing has been published or billed. DigiLocker remains an explicitly labelled demo, not an approved integration. Demo login and account seeding are disabled in production by default.
+The current setup uses Vercel for the React frontend and a Node service on Render for the backend; see [the verified Render build fix](RENDER-BUILD-FIX.md) and [Vercel build fix](VERCEL-BUILD-FIX.md). The Dockerfile remains an alternative for serving both together. Hosting is left to you; nothing has been published or billed. DigiLocker remains an explicitly labelled demo, not an approved integration. Demo login and account seeding are disabled in production by default.
 
 ## 1. Upload the source
 
@@ -31,17 +31,17 @@ Generate a JWT secret locally with `node -e "console.log(require('node:crypto').
 
 Full AI/media functionality needs Gemini and all Cloudinary credentials. Without Gemini, the existing manual extraction fallback remains available. If all Cloudinary fields are empty, the app can start but media upload is unavailable; partial Cloudinary settings fail startup. Existing local development keys are not included in the release archive.
 
-## 3. Deploy one service
+## 3. Deploy the backend or combined Docker service
 
 ### Render with the supplied Blueprint
 
 1. Push the source to your repository.
-2. In Render, create a Blueprint from `render.yaml`, or create one Web Service with **Docker** runtime and the repository-root `Dockerfile`.
+2. In Render, create a Blueprint from `render.yaml`, or create a **Node** Web Service. Leave Root Directory blank so sibling `shared/` source is available. Use Node `22.x`, Build Command `cd server && npm install --include=dev && npm run build`, and Start Command `cd server && npm start`.
 3. Enter the secret settings and final public origin from the table above. The Blueprint generates `JWT_SECRET` for a new service; do not replace a working secret on each deploy.
-4. Use health path `/api/health`. No separate frontend service or Vite dev server is needed. The image's CMD starts the compiled API and serves the built site.
+4. Use health path `/api/health`. The React frontend stays on Vercel. Set its existing VITE_API_BASE_URL to the Render HTTPS address ending in `/api`. CLIENT_URL and PUBLIC_APP_URL on Render must use the frontend's public origin.
 5. Deploy manually. The supplied Blueprint disables automatic deployment. Point your custom domain to the host and enable HTTPS if using one.
 
-The template uses the official [Docker runtime](https://render.com/docs/docker) and [Blueprint Docker fields](https://render.com/docs/blueprint-spec). It does not create a database or hosting account. Render supplies the runtime port. The image includes FFmpeg/FFprobe, runs as the `node` user and has a health check.
+The template uses the official [Node runtime with monorepo commands](https://render.com/docs/monorepo-support). It does not create a database or hosting account. Render supplies the runtime port. Native video decoding requires FFmpeg/FFprobe on the host; the existing manual-review fallback remains if unavailable. The optional Dockerfile below includes those executables and runs as the `node` user.
 
 ### Docker on your own host
 

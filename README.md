@@ -2,6 +2,8 @@
 
 **A bridge from practical competence to formal recognition.**
 
+Render backend build fix: [portable server build, shared-source requirements and verified Node settings](RENDER-BUILD-FIX.md). With the current sibling `shared/` source, leave Render Root Directory blank (repository root) and run its commands inside `server`; no shared logic is duplicated.
+
 Deployment: follow [the current production guide](DEPLOYMENT.md). The Render template now uses Docker with FFmpeg; production validates the public origin and server configuration. Use `npm run package:deploy` to make a source archive without local secrets or databases. Hosting remains manual.
 
 Latest login update: [separate role login pages and the explicitly labelled DigiLocker mock](LOGIN-UPDATE.md). **67 tests pass** (53 API + 14 UI), with 51 routes/states checked in Hindi and Marathi. Real DigiLocker integration is not enabled or approved. Browser inspection could not start because its runtime could not write kernel assets.

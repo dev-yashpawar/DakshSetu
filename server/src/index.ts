@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 import { randomBytes } from "node:crypto";
 import express from "express";
+import { existsSync } from "node:fs";
 import { connectDatabase } from "./models.js";
 import { seedDatabase } from "./services.js";
 import { createApp } from "./app.js";
@@ -42,25 +43,32 @@ if (production) {
     dirname(fileURLToPath(import.meta.url)),
     "../../../../client/dist",
   );
-  app.use(
-    express.static(clientDist, {
-      setHeaders(res, path) {
-        if (path.endsWith("sw.js") || path.endsWith("index.html"))
-          res.setHeader("Cache-Control", "no-cache");
-        else if (path.includes("assets"))
-          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      },
-    }),
-  );
-  app.get("*", (_req, res) => res.sendFile(resolve(clientDist, "index.html")));
+  // Backend-only deployments do not have a frontend build to serve.
+  if (existsSync(resolve(clientDist, "index.html"))) {
+    app.use(
+      express.static(clientDist, {
+        setHeaders(res, path) {
+          if (path.endsWith("sw.js") || path.endsWith("index.html"))
+            res.setHeader("Cache-Control", "no-cache");
+          else if (path.includes("assets"))
+            res.setHeader(
+              "Cache-Control",
+              "public, max-age=31536000, immutable",
+            );
+        },
+      }),
+    );
+    app.get("*", (_req, res) =>
+      res.sendFile(resolve(clientDist, "index.html")),
+    );
+  }
 }
-const server = app.listen(
-  Number(process.env.PORT || 4000),
-  process.env.HOST || (production ? "0.0.0.0" : "127.0.0.1"),
-  () =>
-    console.log(
-      `DakshSetu API ready at http://127.0.0.1:${process.env.PORT || 4000} · MongoDB connected · Phases 1–14`,
-    ),
+const port = Number(process.env.PORT || 4000);
+const host = process.env.HOST || (production ? "0.0.0.0" : "127.0.0.1");
+const server = app.listen(port, host, () =>
+  console.log(
+    `DakshSetu API ready at http://${host}:${port} · MongoDB connected · Phases 1–14`,
+  ),
 );
 const stop = () => {
   server.close(() => {

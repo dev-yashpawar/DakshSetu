@@ -1,13 +1,17 @@
-# Manual deployment template. Set secret values in the Render dashboard.
+# Backend-only Node deployment. Leave Render Root Directory blank so shared/ is accessible.
+# Vercel serves client/. Set secret values in the Render dashboard.
 services:
   - type: web
     name: dakshsetu
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    runtime: node
+    rootDir: .
+    buildCommand: cd server && npm install --include=dev && npm run build
+    startCommand: cd server && npm start
     healthCheckPath: /api/health
     autoDeployTrigger: "off"
     envVars:
+      - key: NODE_VERSION
+        value: "22.x"
       - key: NODE_ENV
         value: production
       - key: HOST
