@@ -10,6 +10,8 @@ COPY server/assets server/assets
 COPY server/tsconfig.json server/tsconfig.json
 COPY shared shared
 COPY scripts/build-offline.mjs scripts/build-offline.mjs
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim

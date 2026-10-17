@@ -1,4 +1,14 @@
 export const managementMessages: readonly [string, string, string][] = [
+  [
+    "Check VITE_API_BASE_URL and redeploy the frontend.",
+    "VITE_API_BASE_URL जाँचें और फ्रंटएंड फिर से डिप्लॉय करें।",
+    "VITE_API_BASE_URL तपासा आणि फ्रंटएंड पुन्हा डिप्लॉय करा.",
+  ],
+  [
+    "The API URL must not point to the Vercel frontend.",
+    "API URL को Vercel फ्रंटएंड पर न भेजें।",
+    "API URL ने Vercel फ्रंटएंडकडे निर्देश करू नये.",
+  ],
   ["Please wait", "कृपया प्रतीक्षा करें", "कृपया प्रतीक्षा करा"],
   [
     "Continue with DigiLocker",
