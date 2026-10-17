@@ -96,6 +96,10 @@ Docker shell equivalent: `docker exec dakshsetu npm run seed:qualifications -w s
 - Check mobile/laptop layout, language switching, microphone permissions, reconnect sync and PDF printing in your browser. Offline features and microphone permissions need HTTPS (or loopback during local testing).
 - Keep the previous source/image version and database backup for rollback. Avoid resetting the database during redeployment.
 
+## Optional demo login
+
+For a demonstration deployment, set Render `ALLOW_DEMO_LOGIN=true`. Run demo seeding once with `SEED_DEMO=true`, then set `SEED_DEMO=false` after successful startup. Existing system settings must also have demo mode enabled (Administration → System settings). The public `/api/settings/public` response reports the effective `demoEnabled` value, combining the server switch and the saved setting. All three login pages use that runtime value; `VITE_DEMO_LOGIN` is no longer required. After updating this code, redeploy both backend and frontend. Demo buttons fill the corresponding account credentials; press Sign in afterward. DigiLocker remains a clearly labelled worker demo, without identity verification.
+
 ## Verification and limits
 
 Verified for this release: production build; production-configuration regression (missing/invalid origin, secret, database, port, proxy and partial storage cases); compiled API/SPA production smoke; bundle guard; 27-asset offline shell; and source archive inventory/checksum. The production dependency audit reported **zero known vulnerabilities** at this check. The packaged source was checked against the configured local secret values and none were present. Earlier unchanged page verification passed 91 live checks and 14 UI tests; earlier backend verification passed 53 tests. These are layered checks, not a claim of a new combined test run. No public deployment was performed.

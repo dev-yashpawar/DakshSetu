@@ -503,7 +503,7 @@ export function createApp(
   );
   registerAssessorRoutes(app, db, requireAuth, config.ai, config.imageStorage);
   registerFeatureRoutes(app, db, requireAuth);
-  registerManagementRoutes(app, db, requireAuth);
+  registerManagementRoutes(app, db, requireAuth, config.allowDemoLogin !== false);
   registerSyncRoutes(app, db, requireAuth);
   registerMediaRoutes(app, db, requireAuth, config.imageStorage, config.ai);
   registerCredentialRoutes(app, db, requireAuth, config);

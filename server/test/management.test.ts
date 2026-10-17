@@ -96,6 +96,8 @@ test("DigiLocker mock only opens the demo worker and respects disabled demo acce
     allowDemoLogin: false,
     ai: { apiKey: "", model: "test" },
   });
+  assert.equal((await request(app).get("/api/settings/public").expect(200)).body.demoEnabled, true);
+  assert.equal((await request(lockedApp).get("/api/settings/public").expect(200)).body.demoEnabled, false);
   await request(lockedApp)
     .post("/api/auth/digilocker/demo")
     .send({})
@@ -107,6 +109,7 @@ test("DigiLocker mock only opens the demo worker and respects disabled demo acce
       { $set: { demoEnabled: false } },
     );
     try {
+      assert.equal((await request(app).get("/api/settings/public").expect(200)).body.demoEnabled, false);
       await request(app).post("/api/auth/digilocker/demo").send({}).expect(403);
     } finally {
       await ctx.models.SystemSettings.updateOne(

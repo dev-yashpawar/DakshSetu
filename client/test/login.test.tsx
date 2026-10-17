@@ -96,6 +96,14 @@ test(
         );
         const email = screen.getByLabelText("Email address"),
           password = screen.getByLabelText("Password", { exact: true });
+        const demoButton = await screen.findByRole("button", {
+          name: role === "worker" ? /Use demo/ : role === "assessor" ? "Use demo assessor account" : "Use demo administrator account",
+        });
+        await user.click(demoButton);
+        assert.equal((email as HTMLInputElement).value, role + "@dakshsetu.demo");
+        assert.equal((password as HTMLInputElement).value, "demo123");
+        await user.clear(email);
+        await user.clear(password);
         await user.type(
           email,
           (role === "admin" ? "worker" : "admin") + "@dakshsetu.demo",

@@ -33,7 +33,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       "hi",
       "mr",
     ]),
-    [demoAccountsEnabled, setDemoAccountsEnabled] = useState(true);
+    [demoAccountsEnabled, setDemoAccountsEnabled] = useState(false);
   const [user, setUser] = useState<PublicUser | null>(null),
     [ready, setReady] = useState(false),
     [sessionError, setSessionError] = useState(""),
@@ -63,7 +63,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               supported.includes(current) ? current : supported[0],
             );
           }
-          setDemoAccountsEnabled(r.data.demoEnabled !== false);
+          setDemoAccountsEnabled(r.data.demoEnabled === true);
         })
         .catch(() => {});
     };

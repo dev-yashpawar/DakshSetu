@@ -59,6 +59,7 @@ export function registerManagementRoutes(
   app: Express,
   db: Models,
   auth: RequestHandler,
+  allowDemoLogin = true,
 ) {
   app.post(
     "/api/assessments/:id/ai-review",
@@ -221,7 +222,10 @@ export function registerManagementRoutes(
     "/api/settings/public",
     wrap(async (_req, res) => {
       const s = await getSettings(db);
-      res.json({ languages: s.languages, demoEnabled: s.demoEnabled });
+      res.json({
+        languages: s.languages,
+        demoEnabled: allowDemoLogin && s.demoEnabled,
+      });
     }),
   );
   app.get(

@@ -39,9 +39,7 @@ export function Auth({
         : "worker");
   const assessorLogin = !register && selectedRole === "assessor";
   const adminLogin = !register && selectedRole === "admin";
-  const demoEnabled =
-    import.meta.env?.PROD !== true ||
-    import.meta.env?.VITE_DEMO_LOGIN === "true";
+  const demoEnabled = demoAccountsEnabled;
   const [show, setShow] = useState(false),
     [error, setError] = useState("");
   const [lockerDemo, setLockerDemo] = useState(false),
