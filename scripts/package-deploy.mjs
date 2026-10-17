@@ -56,6 +56,7 @@ for (const path of [
   "client/package.json",
   "client/tsconfig.json",
   "client/vite.config.ts",
+  "client/vercel.json",
   "client/index.html",
   "client/src",
   "client/public",
