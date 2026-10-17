@@ -1,4 +1,5 @@
 import { adminSections, PortalSidebar } from "../components/PortalSidebar";
+import "../locales/register-practical";
 import { CalibrationCreator } from "./Quality";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -6,7 +7,8 @@ import { api, errorMessage } from "../services/api";
 import { useTranslate } from "../localization";
 import { ErrorNotice, Loading } from "../components/common";
 import { useSession } from "../store/session";
-import { rubric, practicalTask } from "../../../shared/assessment";
+import { rubric, practicalTask, recommendations } from "../../../shared/assessment";
+import { practicalStageLabels } from "../../../shared/practical";
 type Row = Record<string, any>;
 export function Admin() {
   const { section = "dashboard" } = useParams();
@@ -24,6 +26,8 @@ function AdminSection({ section }: { section: string }) {
     [filter, setFilter] = useState(query.get("status") ?? ""),
     [search, setSearch] = useState(query.get("batch") ?? ""),
     [refresh, setRefresh] = useState(0),
+    [workflowFilter, setWorkflowFilter] = useState(""),
+    [practicalFilters, setPracticalFilters] = useState({ trade: "", assessorId: "", result: "", from: "", to: "", credentialStatus: "" }),
     [selected, setSelected] = useState<Row | null>(null),
     [form, setForm] = useState<Row | null>(null),
     [detail, setDetail] = useState<Row | null>(null);
@@ -59,7 +63,7 @@ function AdminSection({ section }: { section: string }) {
             ...(section === "users"
               ? { role: filter || undefined, search: search || undefined }
               : section === "assessments"
-                ? { status: filter || undefined, batch: search || undefined }
+                ? { status: filter || undefined, batch: search || undefined, workflow: workflowFilter || undefined, ...Object.fromEntries(Object.entries(practicalFilters).filter(([,v]) => v)), ...(practicalFilters.from ? { from: new Date(practicalFilters.from + "T00:00:00").toISOString() } : {}), ...(practicalFilters.to ? { to: new Date(practicalFilters.to + "T23:59:59.999").toISOString() } : {}) }
                 : {}),
           },
         },
@@ -73,7 +77,7 @@ function AdminSection({ section }: { section: string }) {
     return () => {
       live = false;
     };
-  }, [endpoint, page, filter, search, refresh]);
+  }, [endpoint, page, filter, search, refresh, workflowFilter, practicalFilters]);
   const mutate = async (fn: () => Promise<unknown>) => {
     setBusy(true);
     setError("");
@@ -355,6 +359,15 @@ function AdminSection({ section }: { section: string }) {
         )}
         {section === "assessments" && (
           <div className="admin-toolbar">
+            <label>{tr("Workflow status")}<select value={workflowFilter} onChange={e => { setWorkflowFilter(e.target.value); setPage(1); }}><option value="">{tr("All assessments")}</option>{Object.entries(practicalStageLabels).map(([key,label]) => <option key={key} value={key}>{tr(label)}</option>)}</select></label>
+            <details className="help-disclosure"><summary>{tr("More filters")}</summary><div className="practical-task-form">
+              <label>{tr("Trade")}<input value={practicalFilters.trade} onChange={e => {setPracticalFilters(f => ({...f,trade:e.target.value})); setPage(1);}} /></label>
+              <label>{tr("Assessor")}<select value={practicalFilters.assessorId} onChange={e => {setPracticalFilters(f => ({...f,assessorId:e.target.value}));setPage(1);}}><option value="">{tr("All assessors")}</option>{(data?.people ?? []).filter((p:Row) => p.role === "assessor").map((p:Row) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+              <label>{tr("Result")}<select value={practicalFilters.result} onChange={e => {setPracticalFilters(f => ({...f,result:e.target.value}));setPage(1);}}><option value="">{tr("All results")}</option>{recommendations.map(r => <option value={r} key={r}>{tr(r)}</option>)}</select></label>
+              <label>{tr("From date")}<input type="date" value={practicalFilters.from} onChange={e => {setPracticalFilters(f => ({...f,from:e.target.value}));setPage(1);}} /></label>
+              <label>{tr("To date")}<input type="date" value={practicalFilters.to} onChange={e => {setPracticalFilters(f => ({...f,to:e.target.value}));setPage(1);}} /></label>
+              <label>{tr("Credential status")}<select value={practicalFilters.credentialStatus} onChange={e => {setPracticalFilters(f => ({...f,credentialStatus:e.target.value}));setPage(1);}}><option value="">{tr("All credentials")}</option>{["ACTIVE","UPDATED","REVOKED"].map(s => <option key={s} value={s}>{tr(s)}</option>)}</select></label>
+            </div></details>
             <label>
               {tr("Status")}
               <select
@@ -559,6 +572,9 @@ function AdminSection({ section }: { section: string }) {
                 [
                   ["workerName", "Candidate"],
                   ["status", "Status"],
+                  ["workflowStatus", "Workflow status"],
+                  ["practicalTaskTitle", "Task title"],
+                  ["aiReviewStatus", "AI review status"],
                   ["assessorName", "Assessor"],
                   ["batch", "Batch"],
                   ["scheduledAt", "Scheduled date"],

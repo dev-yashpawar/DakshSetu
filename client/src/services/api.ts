@@ -1,6 +1,7 @@
 import axios from "axios";
 import { configureOffline, isOnline } from "./offline";
 import { resolveApiBaseURL, frontendApiBaseMessage } from "./api-base";
+import { notifySuccess } from "./feedback";
 const production = import.meta.env?.PROD === true;
 let baseURL: string | undefined, configurationError: unknown;
 try {
@@ -32,6 +33,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 configureOffline(api);
+api.interceptors.response.use(response => {
+  const method = response.config.method?.toLowerCase(), url = response.config.url ?? "";
+  if(!["post","put","patch","delete"].includes(method ?? "") || response.status < 200 || response.status >= 300 || /media-intents|\/sync(?:$|\?)|\/auth\/login|\/auth\/digilocker/.test(url)) return response;
+  notifySuccess("Done");
+  return response;
+});
 export function errorMessage(error: unknown) {
   if (axios.isAxiosError(error))
     return (

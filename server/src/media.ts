@@ -12,6 +12,7 @@ import {
   videoAnalysisAvailable,
 } from "./video.js";
 import { audit } from "./audit.js";
+import { assertEvidenceEditable } from "./practical.js";
 const route =
   (fn: (req: Request, res: Response) => Promise<unknown>): RequestHandler =>
   (req, res, next) => {
@@ -37,6 +38,7 @@ export function registerMediaRoutes(
       throw new HttpError(403, "This area is for the assigned assessor.");
     if (write && a.status === "SIGNED_OFF")
       throw new HttpError(423, "This assessment is signed off and locked.");
+    if (write) assertEvidenceEditable(a, req.user.role);
     return a;
   }
   app.post(
@@ -57,10 +59,12 @@ export function registerMediaRoutes(
             filename: z.string().min(1).max(150),
             size: z.number().int().positive().max(maxVideoBytes),
             sha256: z.string().regex(/^[a-f0-9]{64}$/),
+            taskId: id.optional(),
           })
           .strict()
           .parse(req.body),
         a = await owned(req.params.id, req, true);
+      if(input.taskId !== a.practicalTask?.taskId) throw new HttpError(409, "The practical task changed. Review the device draft before uploading.");
       if (
         (input.type === "image" &&
           (input.size > 5 * 1024 * 1024 ||
@@ -132,7 +136,7 @@ export function registerMediaRoutes(
             new HttpError(
               error.code === "LIMIT_FILE_SIZE" ? 413 : 400,
               error.code === "LIMIT_FILE_SIZE"
-                ? "Choose a video smaller than 10 MB."
+                ? "The video exceeds the configured upload limit."
                 : "Upload one video and try again.",
             ),
           );
@@ -204,6 +208,9 @@ export function registerMediaRoutes(
           id: uploadId,
           assessmentId: a.id,
           uploadedBy: req.user.id,
+          candidateId: a.workerId,
+          taskId: a.practicalTask?.taskId,
+          uploaderRole: req.user.role,
           type: "video",
           url: uploaded.url,
           cloudinaryPublicId: uploaded.publicId,
@@ -224,11 +231,12 @@ export function registerMediaRoutes(
                 ? { workerId: req.user.id }
                 : { assessorId: req.user.id }),
               status: { $ne: "SIGNED_OFF" },
+              ...(a.practicalTask ? { "practicalTask.taskId": a.practicalTask.taskId, "practicalWorkflow.submittedAt": { $exists: false } } : {}),
             },
             {
               $addToSet: { evidenceIds: uploadId },
               $inc: { version: 1 },
-              $set: { updatedAt: at },
+              $set: { updatedAt: at, ...(a.practicalTask ? { "practicalWorkflow.stage": "EVIDENCE_PENDING" } : {}) },
               $push: {
                 history: {
                   actorId: req.user.id,

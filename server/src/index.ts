@@ -71,6 +71,7 @@ const server = app.listen(port, host, () =>
   ),
 );
 const stop = () => {
+  app.locals.stopPracticalReview?.();
   server.close(() => {
     void connection.close().then(() => process.exit(0));
   });

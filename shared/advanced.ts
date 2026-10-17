@@ -40,6 +40,10 @@ export interface CredentialView {
   competencies: CompetencyRecord[];
 }
 export interface VerificationView {
+  credentialStatus?: "ACTIVE" | "UPDATED" | "REVOKED";
+  qualification?: string;
+  assessorVerified?: boolean;
+  issuedAt?: string;
   credentialId?: string;
   status: "VALID" | "REVOKED" | "NOT_FOUND";
   revision?: number;

@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import "../src/locales/register-practical";
 import assert from "node:assert/strict";
 import React from "react";
 import { JSDOM } from "jsdom";
@@ -12,6 +13,7 @@ import {
   practicalTask,
 } from "../../shared/assessment";
 import { messages } from "../src/locales/messages";
+import { copy } from "../src/i18n";
 import { translate, hasTranslation } from "../src/localization";
 import type { Language } from "../../shared/types";
 
@@ -531,7 +533,7 @@ test(
         for (const value of originals)
           remaining = remaining.replaceAll(value, "");
         remaining = remaining.replace(
-          /DakshSetu|DAKSHSETU|DigiLocker|MongoDB|Cloudinary|WebP|WebM|MP4|JPEG|PNG|EXIF|NSQF|SIH|RPL|UTF|PDF|AI|MB|case_id|assessor_id|criterion_id|condition|score|case-1|assessor-1|unassisted|assisted/g,
+          /DakshSetu|DAKSHSETU|DigiLocker|Gemini|MongoDB|Cloudinary|WebP|WebM|MP4|JPEG|PNG|EXIF|NSQF|SIH|RPL|UTF|PDF|AI|MB|case_id|assessor_id|criterion_id|condition|score|case-1|assessor-1|unassisted|assisted/g,
           "",
         );
         if (/[A-Za-z]{3}/.test(remaining)) failures.add(text.trim());
@@ -722,6 +724,11 @@ test(
                 ).value.includes("Original voice transcript."),
               ),
             );
+            // Recognition remains active across browser session endings until Stop.
+            await user.click(screen.getByRole("button", {
+              name: language === "hi" ? copy.hi.stop : copy.mr.stop,
+              exact: true,
+            }));
             Object.defineProperty(window, "SpeechRecognition", {
               value: undefined,
               configurable: true,

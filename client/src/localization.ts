@@ -32,6 +32,9 @@ for (const [key, value] of Object.entries(copy.en)) {
 for (const values of Object.values(skillNames))
   add(values.en, values.hi, values.mr);
 for (const row of messages) add(...row);
+export function registerMessages(rows: readonly (readonly [string,string,string])[]) {
+  for(const row of rows) if(!dictionary.has(normalize(row[0]))) add(...row);
+}
 
 // This translates displayed copy only. Form values, API IDs and saved canonical labels stay unchanged.
 // Non-string React children pass through without altering elements, handlers, keys or refs.
@@ -45,6 +48,8 @@ export function translate<T>(
   let translated = dictionary.get(key)?.[language];
   if (language === "en" && normalize(value) === key) translated = value.trim();
   if (translated === undefined) {
+    const verificationPrompt = /^Before starting, say (.+) and show your tester to the camera\.$/.exec(value);
+    if (verificationPrompt) return translate("Before starting, say {id} and show your tester to the camera.", language, { id: verificationPrompt[1] }) as T;
     const csvRow = /^Invalid CSV row (\d+)$/.exec(value);
     if (csvRow)
       return translate("Invalid CSV row {count}", language, {

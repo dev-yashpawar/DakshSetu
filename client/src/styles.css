@@ -2648,6 +2648,30 @@ summary::-webkit-details-marker {
     font-size: 11px;
   }
 }
+.practical-task-form { display: grid; gap: 1rem; padding-top: 1rem; max-width: 52rem; }
+.practical-task-form label { display: grid; gap: .4rem; font-weight: 600; }
+.practical-task-form textarea { min-height: 5rem; }
+.practical-task-form .checkbox-row, .worker-practical .checkbox-row { display: flex; align-items: flex-start; gap: .7rem; }
+.worker-practical { display: grid; gap: 1.1rem; }
+.practical-instructions { padding-left: 1.5rem; display: grid; gap: .45rem; }
+.practical-evidence-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: 1rem; }
+.practical-evidence-list .evidence-card { padding: 1rem; min-width: 0; overflow-wrap: anywhere; }
+.practical-player, .practical-evidence-list video, .practical-evidence-list img { width: 100%; max-height: 25rem; object-fit: contain; border-radius: .75rem; }
+.break-id { overflow-wrap: anywhere; font-size: .9rem; }
+.submission-actions { display: grid; gap: 1rem; border-top: 1px solid #dbe3f0; padding-top: 1rem; }
+.worker-practical progress { width: min(100%, 30rem); accent-color: #ed7900; }
+.timestamp-panel { display: grid; gap: .6rem; border: 1px solid #dbe3f0; border-radius: .75rem; padding: 1rem; margin-top: .75rem; }
+.practical-review-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.practical-review-grid video { width: 100%; border-radius: .75rem; }
+.practical-review-grid .timestamp-panel { margin-top: 0; max-height: 30rem; overflow-y: auto; }
+@media (max-width: 900px) { .practical-review-grid { grid-template-columns: 1fr; } }
+.timestamp-observation { display: flex; align-items: flex-start; gap: 1rem; text-align: left; background: #f4f7fc; color: #0b2a5b; border: 1px solid #dbe3f0; border-radius: .5rem; padding: .75rem; cursor: pointer; font: inherit; }
+.timestamp-observation strong { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.timestamp-observation small { display: block; margin-top: .25rem; font-weight: 400; }
+.timestamp-observation.warning, .timestamp-observation.safety-critical { border-left: 4px solid #ed7900; }
+.timestamp-observation:focus-visible { outline: 3px solid #ed7900; outline-offset: 2px; }
+.rubric-ai-hint { background: #f4f7fc; border-radius: .5rem; padding: .65rem; font-size: .9rem; }
+@media (max-width: 600px) { .timestamp-panel { padding: .65rem; } .timestamp-observation { gap: .6rem; } .practical-task-form input, .practical-task-form textarea { min-width: 0; width: 100%; } .practical-task-form input[type="checkbox"] { width: auto; } }
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;

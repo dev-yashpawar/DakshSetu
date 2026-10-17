@@ -17,6 +17,7 @@ import {
 } from "../../shared/assessment.js";
 import { questions } from "./questions.js";
 import { audit } from "./audit.js";
+import { assertReadyForReview } from "./practical.js";
 
 export async function savePracticalForId(
   db: Models,
@@ -56,6 +57,7 @@ export async function savePracticalForId(
   }
   if (a.status === "SIGNED_OFF")
     throw new HttpError(423, "This assessment is signed off and locked.");
+  assertReadyForReview(a);
   const definition = getRubric(a.rubricVersion, a.rubricSnapshot);
   if (
     input.rubricScores.some(
@@ -101,6 +103,7 @@ export async function savePracticalForId(
           updatedAt: now,
         },
         practicalScore: score,
+        ...(a.practicalWorkflow ? { "practicalWorkflow.stage": "ASSESSOR_REVIEWED", "practicalWorkflow.reviewStartedAt": a.practicalWorkflow.reviewStartedAt ?? now } : {}),
         updatedAt: now,
       },
       $inc: { version: 1 },
@@ -143,6 +146,7 @@ export async function savePracticalForId(
     oldValue: a.practical?.rubricScore,
     newValue: score,
   });
+  if(a.practicalTask) await audit(db, { id: a.id + ":" + updated.version + ":review", actorId, actorRole: "assessor", assessmentId: a.id, action: "ASSESSOR_SCORE_SAVED", oldValue: a.practical?.rubricScore, newValue: score });
   return updated;
 }
 export async function syncDeclaration(

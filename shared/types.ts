@@ -42,6 +42,8 @@ export interface Profile {
   version: number;
 }
 export interface Assessment {
+  practicalTask?: import("./practical.js").PracticalTask;
+  practicalWorkflow?: import("./practical.js").PracticalWorkflow;
   qualificationSnapshot?: Qualification;
   rubricSnapshot?: import("./assessment.js").RubricCriterion[];
   qualificationRevision?: number;
@@ -156,6 +158,10 @@ export interface AuditLog {
   createdAt: string;
 }
 export interface Evidence {
+  candidateId?: string;
+  taskId?: string;
+  uploaderRole?: Role;
+  duration?: number;
   reassessmentId?: string;
   id: string;
   assessmentId: string;
@@ -172,6 +178,9 @@ export interface Evidence {
 export interface AIObservation {
   evidenceId: string;
   observations: {
+    timestamp?: number;
+    timestampLabel?: string;
+    type?: "info" | "warning" | "safety-critical" | "positive";
     criterionId: string;
     criterion: string;
     status: "observed" | "warning" | "unclear";
@@ -179,6 +188,7 @@ export interface AIObservation {
     evidence?: string;
   }[];
   warnings: string[];
+  suggestedScores?: { criterionId: string; score: number; maxScore: 3; reason: string }[];
   suggestedScore: number;
   maxScore: 10;
   summary: string;

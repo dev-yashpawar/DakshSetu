@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { timestampLabel } from "../../../shared/practical";
 import type {
   Assessment,
   Evidence,
@@ -10,13 +11,17 @@ import { useSession } from "../store/session";
 import { useTranslate } from "../localization";
 import { useConnectivity } from "./OfflineStatus";
 import { ErrorNotice } from "./common";
-function PrivateVideo({
+export function PrivateVideo({
   assessmentId,
   evidenceId,
+  observation,
 }: {
   assessmentId: string;
   evidenceId: string;
+  observation?: AIObservation;
 }) {
+  const player = useRef<HTMLVideoElement>(null);
+  const [seek, setSeek] = useState<number | null>(null);
   const tr = useTranslate(),
     [source, setSource] = useState(""),
     [error, setError] = useState("");
@@ -42,10 +47,12 @@ function PrivateVideo({
     };
   }, [assessmentId, evidenceId]);
   return (
-    <>
+    <div className={observation ? "practical-review-grid" : "private-video"}>
       <ErrorNotice message={tr(error)} />
       {source && (
         <video
+          ref={player}
+          onLoadedMetadata={() => { if (seek !== null && player.current) player.current.currentTime = Math.min(seek, player.current.duration || seek); }}
           src={source}
           controls
           preload="metadata"
@@ -53,15 +60,24 @@ function PrivateVideo({
           style={{ maxWidth: "100%", maxHeight: 360 }}
         />
       )}
-    </>
+      {observation && <aside className="timestamp-panel" aria-label={tr("AI timestamps")}>
+        <h3>{tr("AI Observation — Suggested Only")}</h3>
+        <p>{tr("Human assessor review required")}</p>
+        {observation.observations.filter(o => o.timestamp !== undefined).map(o => <button key={o.criterionId} className={`timestamp-observation ${o.type ?? "info"}`} disabled={!source} onClick={() => { const time = o.timestamp!; setSeek(time); if(player.current && player.current.readyState >= 1) player.current.currentTime = Math.min(time, player.current.duration || time); }}>
+          <strong>{timestampLabel(o.timestamp!)}</strong><span>{tr(o.criterion)} · {tr(o.type ?? o.status)}<small>{tr(o.evidence || "Not clearly visible")} · {Math.round(o.confidence * 100)}%</small></span>
+        </button>)}
+      </aside>}
+    </div>
   );
 }
 function VideoDisclosure({
   assessmentId,
   evidenceId,
+  observation,
 }: {
   assessmentId: string;
   evidenceId: string;
+  observation?: AIObservation;
 }) {
   const tr = useTranslate(),
     [open, setOpen] = useState(false);
@@ -69,7 +85,7 @@ function VideoDisclosure({
     <details onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary>{tr("View private video")}</summary>
       {open && (
-        <PrivateVideo assessmentId={assessmentId} evidenceId={evidenceId} />
+        <PrivateVideo assessmentId={assessmentId} evidenceId={evidenceId} observation={observation} />
       )}
     </details>
   );
@@ -102,7 +118,7 @@ export function VideoReview({
   const load = async () => {
     try {
       const { data } = await api.get(`/assessments/${assessment.id}/videos`);
-      setVideos(data.items);
+      setVideos(assessment.practicalTask ? data.items.filter((e: Evidence) => e.taskId === assessment.practicalTask!.taskId) : data.items);
       setAvailable(data.analysisAvailable);
     } catch (e) {
       setError(errorMessage(e));
@@ -197,7 +213,7 @@ export function VideoReview({
           )}
         </p>
       )}
-      {canEdit && (
+      {canEdit && !assessment.practicalTask && (
         <div className="media-upload">
           <label>
             {tr("Choose short practical video")}
@@ -245,8 +261,8 @@ export function VideoReview({
       {videos.map((video) => (
         <article key={video.id} className="video-record">
           <h3>{video.filename}</h3>
-          <VideoDisclosure assessmentId={assessment.id} evidenceId={video.id} />
-          {canEdit && (
+          {assessment.practicalTask ? <PrivateVideo assessmentId={assessment.id} evidenceId={video.id} observation={video.id === assessment.practicalWorkflow?.reviewEvidenceId ? assessment.aiObservation : undefined} /> : <VideoDisclosure assessmentId={assessment.id} evidenceId={video.id} observation={video.analysis} />}
+          {canEdit && !assessment.practicalTask && (
             <button
               className="button outline"
               disabled={!online || !available || busy}
@@ -277,7 +293,7 @@ export function VideoReview({
               <p>
                 {tr("AI suggested score")}: {video.analysis.suggestedScore} / 10
               </p>
-              <ul>
+              {!assessment.practicalTask && <ul>
                 {video.analysis.observations.map((o) => (
                   <li key={o.criterionId}>
                     {tr(o.criterion)} · {tr(o.status)} ·{" "}
@@ -285,7 +301,7 @@ export function VideoReview({
                     {o.evidence && <p>{o.evidence}</p>}
                   </li>
                 ))}
-              </ul>
+              </ul>}
               <ul>
                 {[
                   ...video.analysis.warnings,

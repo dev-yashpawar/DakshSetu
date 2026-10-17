@@ -10,7 +10,7 @@ import { seedDatabase } from "../../server/src/services";
 import { createApp } from "../../server/src/app";
 
 test(
-  "Separate login pages connect to their role, reject wrong accounts and protect staff registration",
+  "Role login forms use the real API, reject wrong accounts, fill demo credentials and navigate to their portal",
   { timeout: 120000 },
   async () => {
     const dom = new JSDOM("<!doctype html><html><body></body></html>", {
@@ -55,7 +55,7 @@ test(
       ai: { apiKey: "", model: "test" },
     }).listen(0, "127.0.0.1");
     await new Promise<void>((r) => server.once("listening", r));
-    const { render, screen, within, waitFor, cleanup, configure } =
+    const { render, screen, within, waitFor, cleanup, configure, fireEvent } =
       await import("@testing-library/react");
     configure({ asyncUtilTimeout: 10000 });
     const user = (await import("@testing-library/user-event")).default.setup({
@@ -67,7 +67,25 @@ test(
     const offline = await import("../src/services/offline");
     const device = new offline.OfflineDatabase("login-ui-" + randomUUID());
     offline.useOfflineDatabaseForTest(device);
-    const App = (await import("../src/App")).default;
+    const { BrowserRouter, Routes, Route, Link, useNavigate } = await import("react-router-dom");
+    const { SessionProvider, useSession } = await import("../src/store/session");
+    const { Auth } = await import("../src/pages/Auth");
+    function SignedInPortal() {
+      const { logout } = useSession(), navigate = useNavigate();
+      return <button onClick={() => { logout(); navigate("/"); }}>Sign out</button>;
+    }
+    // Exercise the real auth forms and navigation without coupling this focused test
+    // to lazy worker/assessor/admin data loading (covered by workflow.test.tsx).
+    function App() { return <BrowserRouter><SessionProvider><Routes>
+      <Route path="/" element={<Link to="/login/worker">Register / Login</Link>} />
+      <Route path="/login/worker" element={<Auth key="worker" role="worker" />} />
+      <Route path="/login/assessor" element={<Auth key="assessor" role="assessor" />} />
+      <Route path="/login/admin" element={<Auth key="admin" role="admin" />} />
+      <Route path="/register" element={<Auth register />} />
+      <Route path="/worker/*" element={<SignedInPortal />} />
+      <Route path="/assessor/*" element={<SignedInPortal />} />
+      <Route path="/admin/*" element={<SignedInPortal />} />
+    </Routes></SessionProvider></BrowserRouter>; }
     try {
       render(<App />);
       for (const [role, label, heading] of [
@@ -114,11 +132,9 @@ test(
         );
         await screen.findByText("Use an account for the selected portal.");
         assert.equal(sessionStorage.getItem("dakshsetu-token"), null);
-        await user.clear(email);
-        await user.type(email, role + "@dakshsetu.demo");
-        await user.click(
-          screen.getByRole("button", { name: "Sign in", exact: true }),
-        );
+        // Submit the corrected form without coupling pointer focus to a lazy route transition.
+        fireEvent.change(email, { target: { value: role + "@dakshsetu.demo" } });
+        fireEvent.click(screen.getByRole("button", { name: "Sign in", exact: true }));
         await screen.findByRole("button", { name: "Sign out", exact: true });
         await waitFor(() =>
           assert.ok(

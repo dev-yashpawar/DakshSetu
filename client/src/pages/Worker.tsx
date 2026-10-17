@@ -1,4 +1,5 @@
 import { useTranslate } from "../localization";
+import "../locales/register-practical";
 import { useEffect, useRef, useState } from "react";
 import {
   getDraft,
@@ -10,6 +11,8 @@ import {
 } from "../services/offline";
 import { useConnectivity } from "../components/OfflineStatus";
 import { WorkerOutcome } from "../components/WorkerOutcome";
+import { createSpeechCapture, speechConstructor, type SpeechCapture } from "../services/speech";
+import { RecordedVoice } from "../components/RecordedVoice";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -61,28 +64,6 @@ const skillOptions = [
   "Testing",
 ];
 const years = [0.5, 2, 4, 8];
-type SpeechResult = {
-  results: {
-    [key: number]: { [key: number]: { transcript: string }; isFinal: boolean };
-    length: number;
-  };
-  resultIndex: number;
-};
-type Recognition = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((e: SpeechResult) => void) | null;
-  onerror: ((e: { error: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-};
-type SpeechWindow = Window & {
-  SpeechRecognition?: new () => Recognition;
-  webkitSpeechRecognition?: new () => Recognition;
-};
 type SafeQuestion = Omit<Question, "correctAnswer">;
 const routeNames = [
   "trade",
@@ -182,7 +163,9 @@ export function Worker() {
     [questionIndex, setQuestionIndex] = useState(0),
     [review, setReview] = useState(false),
     [recording, setRecording] = useState(false);
-  const recognition = useRef<Recognition | null>(null),
+  const [interimSpeech, setInterimSpeech] = useState("");
+  const [recordedVoice, setRecordedVoice] = useState(false);
+  const recognition = useRef<SpeechCapture | null>(null),
     titleRef = useRef<HTMLDivElement>(null);
   const current = step ?? "trade";
   useEffect(() => {
@@ -282,6 +265,11 @@ export function Worker() {
     titleRef.current?.focus();
     window.scrollTo(0, 0);
   }, [current]);
+  useEffect(() => {
+    recognition.current?.abort();
+    setRecording(false);
+    setInterimSpeech("");
+  }, [language]);
   // Reloading a later step restores its server data and enforces the same prerequisites as the API.
   useEffect(() => {
     if (!data || loading) return;
@@ -475,34 +463,23 @@ export function Worker() {
       recognition.current?.stop();
       return;
     }
-    const Recognition =
-      (window as SpeechWindow).SpeechRecognition ||
-      (window as SpeechWindow).webkitSpeechRecognition;
+    const Recognition = speechConstructor();
     if (!Recognition) {
       setNotice(t.voiceUnsupported);
+      setRecordedVoice(true);
       return;
     }
     try {
-      const instance = new Recognition();
-      instance.lang = { en: "en-IN", hi: "hi-IN", mr: "mr-IN" }[language];
-      instance.continuous = true;
-      instance.interimResults = false;
-      instance.onresult = (e) => {
-        let text = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) text += e.results[i][0].transcript + " ";
-        }
-        setDescription((prev) => (prev + " " + text).trim().slice(0, 4000));
-        if (text.trim()) setVoiceUsed(true);
-      };
-      instance.onerror = () => {
-        setNotice(t.voiceDenied);
-        setRecording(false);
-      };
-      instance.onend = () => setRecording(false);
-      recognition.current = instance;
-      instance.start();
-      setRecording(true);
+      recognition.current?.abort();
+      const capture = createSpeechCapture({
+        Constructor: Recognition,
+        language: { en: "en-IN", hi: "hi-IN", mr: "mr-IN" }[language],
+        onFinal: text => { setDescription(prev => (prev + " " + text).trim().slice(0,4000)); setVoiceUsed(true); },
+        onInterim: setInterimSpeech, onListening: setRecording,
+        onError: message => { setNotice(message); if(/could not connect|unavailable for this language|recognition stopped/.test(message)) setRecordedVoice(true); },
+      });
+      recognition.current = capture;
+      capture.start();
       setNotice("");
     } catch {
       setNotice(t.voiceDenied);
@@ -810,7 +787,7 @@ export function Worker() {
               title={t.describeQuestion}
               help={t.describeHelp}
             />
-            <div className={`voice-box ${recording ? "recording" : ""}`}>
+            {!recordedVoice && <div className={`voice-box ${recording ? "recording" : ""}`}>
               <button
                 className="microphone"
                 onClick={speech}
@@ -830,8 +807,8 @@ export function Worker() {
                   ),
                 )}
               </span>
-            </div>
-            <div className="or-divider">
+            </div>}
+            <div className="or-divider" hidden={recordedVoice}>
               <span>
                 {tr(
                   language === "en"
@@ -842,6 +819,7 @@ export function Worker() {
                 )}
               </span>
             </div>
+            {recordedVoice ? <RecordedVoice key={language} disabled={busy} onBusy={setRecording} onText={text => { setDescription(prev => (prev + " " + text).trim().slice(0, 4000)); setVoiceUsed(true); setNotice(""); }} /> : <button className="text-button" type="button" disabled={busy} onClick={() => { recognition.current?.abort(); setRecording(false); setRecordedVoice(true); }}>{tr("Record audio instead")}</button>}
             <label className="description-label">
               {t.textLabel}
               <textarea
@@ -855,7 +833,8 @@ export function Worker() {
             <div className="character-count">
               {tr(description.length)} / 4000
             </div>
-            {recording && <p role="status">{tr("Listening…")}</p>}
+            {recording && !recordedVoice && <p role="status">{tr("Listening… Keep speaking. Use Stop when you finish.")}</p>}
+            {interimSpeech && <p className="speech-interim" aria-live="polite">{interimSpeech}</p>}
             <button
               className="button secondary"
               disabled={busy || recording || description.trim().length < 15}
